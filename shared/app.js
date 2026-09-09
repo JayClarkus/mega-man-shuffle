@@ -261,7 +261,7 @@ function renderHome() {
         card.appendChild(label);
 
         card.addEventListener('click', () => {
-            window.location.href = pageUrl(`${slugFor(gameId)}/index.html`);
+            window.location.href = pageUrl(`${slugFor(gameId)}/`);
         });
         attachBackgroundPreview(card, gameCovers);
         gameCovers.appendChild(card);
@@ -292,7 +292,7 @@ function renderMenu() {
         homeBtn.classList.add('active');
     }
     homeBtn.addEventListener('click', () => {
-        window.location.href = pageUrl('index.html');
+        window.location.href = pageUrl('./');
     });
 
     Object.keys(games).forEach(id => {
@@ -303,7 +303,7 @@ function renderMenu() {
         btn.className = 'game-option' + (gameId === currentGameId ? ' active' : '');
         btn.textContent = games[gameId].title;
         btn.addEventListener('click', () => {
-            window.location.href = pageUrl(`${slugFor(gameId)}/index.html`);
+            window.location.href = pageUrl(`${slugFor(gameId)}/`);
         });
         attachBackgroundPreview(btn, gameList);
         li.appendChild(btn);
