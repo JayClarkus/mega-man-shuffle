@@ -36,11 +36,114 @@ body {
     padding: 24px;
 }
 
+.hidden {
+    display: none;
+}
+
 h1 {
     font-size: clamp(3rem, 5vw, 4rem);
     letter-spacing: 2px;
     text-transform: uppercase;
     text-shadow: 3px 3px 0 #00236b;
+}
+
+.home-view {
+    width: 100%;
+    max-width: 780px;
+    text-align: center;
+    padding: 24px;
+}
+
+.home-title {
+    font-size: clamp(3rem, 5vw, 4rem);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 3px 3px 0 #00236b;
+}
+
+.flavor-text {
+    margin-top: 28px;
+    color: #b8c4d8;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+}
+
+.game-covers {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+}
+
+.cover-card {
+    width: 220px;
+    padding: 0;
+    background: rgba(0, 20, 70, 0.35);
+    border: 3px solid #ffffff;
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    font-family: inherit;
+    color: #ffffff;
+    box-shadow: inset 0 0 0 3px #b8c4d8, 0 6px 14px rgba(0, 15, 50, 0.5);
+    transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, filter 0.25s ease, opacity 0.25s ease;
+}
+
+.game-covers.dimming .cover-card:not(.preview-active) {
+    filter: grayscale(85%);
+    opacity: 0.6;
+}
+
+.cover-card:hover {
+    transform: translateY(-4px);
+    border-color: #F0B838;
+    box-shadow: inset 0 0 0 3px #b8c4d8, 0 10px 18px rgba(0, 15, 50, 0.55);
+}
+
+.cover-card img {
+    display: block;
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+}
+
+.cover-card .cover-title {
+    display: block;
+    padding: 10px 8px;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1px;
+    font-size: 1rem;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.cover-card.no-cover {
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cover-card.no-cover .cover-title {
+    background: none;
+    font-size: 1.3rem;
+}
+
+.cover-card:focus-visible {
+    outline: 3px solid #F0B838;
+    outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+    .cover-card {
+        width: 45%;
+        min-width: 140px;
+    }
+
+    .cover-card img,
+    .cover-card.no-cover {
+        height: 160px;
+    }
 }
 
 .subtitle {
@@ -303,7 +406,12 @@ h1 {
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease, filter 0.25s ease, opacity 0.25s ease;
+}
+
+.game-list.dimming .game-option:not(.preview-active) {
+    filter: grayscale(85%);
+    opacity: 0.6;
 }
 
 .game-option:hover {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mega Man Shuffle</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="../style.css">
 </head>
 <body>
     <button id="menu-btn" type="button" aria-label="Select game" aria-expanded="false" aria-controls="game-menu">
@@ -16,14 +16,17 @@
         <ul id="game-list" class="game-list"></ul>
     </nav>
 
-    <section id="home-view" class="home-view">
-        <h1 class="home-title">Mega Man Shuffle</h1>
-        <p class="subtitle">-Select a Game-</p>
+    <main id="game-view" class="container" data-game-id="1">
+        <h1 id="game-title"></h1>
         <br>
-        <div id="game-covers" class="game-covers"></div>
-        <p class="flavor-text">Randomize your run and take on the stages in a whole new way!</p>
-    </section>
+        <p class="subtitle">Stage Order</p>
+        <br>
+        <div id="boss-grid" class="boss-grid"></div>
+        <br>
 
-    <script src="shared/app.js"></script>
+        <button id="shuffle-btn" type="button">Shuffle</button>
+    </main>
+
+    <script src="../shared/app.js"></script>
 </body>
 </html>
