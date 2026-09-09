@@ -3,7 +3,7 @@
 // initials automatically until matching files are dropped into assets/.
 const games = {
     1: {
-        title: 'Mega Man 1',
+        title: 'Mega Man',
         bosses: [
             { name: 'Cut Man' },
             { name: 'Guts Man' },
