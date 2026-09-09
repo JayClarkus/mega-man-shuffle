@@ -178,6 +178,7 @@ const menuBtn = document.getElementById('menu-btn');
 const menuIcon = document.getElementById('menu-icon');
 const menuOverlay = document.getElementById('menu-overlay');
 const gameMenu = document.getElementById('game-menu');
+const homeBtn = document.getElementById('home-btn');
 const gameList = document.getElementById('game-list');
 const gameCovers = document.getElementById('game-covers');
 let bossByName = Object.fromEntries(bosses.map(b => [b.name, b]));
@@ -287,16 +288,12 @@ function closeMenu() {
 function renderMenu() {
     gameList.innerHTML = '';
 
-    const homeLi = document.createElement('li');
-    const homeBtn = document.createElement('button');
-    homeBtn.type = 'button';
-    homeBtn.className = 'game-option' + (currentGameId === null ? ' active' : '');
-    homeBtn.textContent = 'Home';
+    if (currentGameId === null) {
+        homeBtn.classList.add('active');
+    }
     homeBtn.addEventListener('click', () => {
         window.location.href = pageUrl('index.html');
     });
-    homeLi.appendChild(homeBtn);
-    gameList.appendChild(homeLi);
 
     Object.keys(games).forEach(id => {
         const gameId = Number(id);
