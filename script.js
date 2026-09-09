@@ -1,13 +1,152 @@
-const bosses = [
-    { name: 'Metal Man',  image: 'assets/MM2_-_Metal_Man_Portrait.png' },
-    { name: 'Air Man',    image: 'assets/MM2_-_Air_Man_Portrait.png' },
-    { name: 'Bubble Man', image: 'assets/MM2_-_Bubble_Man_Portrait.png' },
-    { name: 'Quick Man',  image: 'assets/MM2_-_Quick_Man_Portrait.png' },
-    { name: 'Crash Man',  image: 'assets/MM2_-_Crash_Man_Portrait.png' },
-    { name: 'Flash Man',  image: 'assets/MM2_-_Flash_Man_Portrait.png' },
-    { name: 'Heat Man',   image: 'assets/MM2_-_Heat_Man_Portrait.png' },
-    { name: 'Wood Man',   image: 'assets/MM2_-_Wood_Man_Portrait.png' }
-];
+// Robot Master roster for each mainline game. Portrait images are resolved by
+// naming convention (see imagePathFor); games without art yet fall back to
+// initials automatically until matching files are dropped into assets/.
+const games = {
+    1: {
+        title: 'Mega Man 1',
+        bosses: [
+            { name: 'Cut Man' },
+            { name: 'Guts Man' },
+            { name: 'Ice Man' },
+            { name: 'Bomb Man' },
+            { name: 'Fire Man' },
+            { name: 'Elec Man' }
+        ]
+    },
+    2: {
+        title: 'Mega Man 2',
+        bosses: [
+            { name: 'Metal Man' },
+            { name: 'Air Man' },
+            { name: 'Bubble Man' },
+            { name: 'Quick Man' },
+            { name: 'Crash Man' },
+            { name: 'Flash Man' },
+            { name: 'Heat Man' },
+            { name: 'Wood Man' }
+        ]
+    },
+    3: {
+        title: 'Mega Man 3',
+        bosses: [
+            { name: 'Needle Man' },
+            { name: 'Magnet Man' },
+            { name: 'Gemini Man' },
+            { name: 'Hard Man' },
+            { name: 'Top Man' },
+            { name: 'Snake Man' },
+            { name: 'Spark Man' },
+            { name: 'Shadow Man' }
+        ]
+    },
+    4: {
+        title: 'Mega Man 4',
+        bosses: [
+            { name: 'Bright Man' },
+            { name: 'Toad Man' },
+            { name: 'Drill Man' },
+            { name: 'Pharaoh Man' },
+            { name: 'Ring Man' },
+            { name: 'Dust Man' },
+            { name: 'Dive Man' },
+            { name: 'Skull Man' }
+        ]
+    },
+    5: {
+        title: 'Mega Man 5',
+        bosses: [
+            { name: 'Gravity Man' },
+            { name: 'Wave Man' },
+            { name: 'Stone Man' },
+            { name: 'Gyro Man' },
+            { name: 'Star Man' },
+            { name: 'Charge Man' },
+            { name: 'Napalm Man' },
+            { name: 'Crystal Man' }
+        ]
+    },
+    6: {
+        title: 'Mega Man 6',
+        bosses: [
+            { name: 'Blizzard Man' },
+            { name: 'Centaur Man' },
+            { name: 'Flame Man' },
+            { name: 'Knight Man' },
+            { name: 'Plant Man' },
+            { name: 'Tomahawk Man' },
+            { name: 'Wind Man' },
+            { name: 'Yamato Man' }
+        ]
+    },
+    7: {
+        title: 'Mega Man 7',
+        bosses: [
+            { name: 'Freeze Man' },
+            { name: 'Junk Man' },
+            { name: 'Burst Man' },
+            { name: 'Cloud Man' },
+            { name: 'Spring Man' },
+            { name: 'Slash Man' },
+            { name: 'Shade Man' },
+            { name: 'Turbo Man' }
+        ]
+    },
+    8: {
+        title: 'Mega Man 8',
+        bosses: [
+            { name: 'Frost Man' },
+            { name: 'Tengu Man' },
+            { name: 'Astro Man' },
+            { name: 'Clown Man' },
+            { name: 'Search Man' },
+            { name: 'Sword Man' },
+            { name: 'Aqua Man' },
+            { name: 'Grenade Man' }
+        ]
+    },
+    9: {
+        title: 'Mega Man 9',
+        bosses: [
+            { name: 'Concrete Man' },
+            { name: 'Tornado Man' },
+            { name: 'Splash Woman' },
+            { name: 'Plug Man' },
+            { name: 'Jewel Man' },
+            { name: 'Hornet Man' },
+            { name: 'Magma Man' },
+            { name: 'Galaxy Man' }
+        ]
+    },
+    10: {
+        title: 'Mega Man 10',
+        bosses: [
+            { name: 'Blade Man' },
+            { name: 'Pump Man' },
+            { name: 'Commando Man' },
+            { name: 'Chill Man' },
+            { name: 'Sheep Man' },
+            { name: 'Strike Man' },
+            { name: 'Nitro Man' },
+            { name: 'Solar Man' }
+        ]
+    },
+    11: {
+        title: 'Mega Man 11',
+        bosses: [
+            { name: 'Block Man' },
+            { name: 'Fuse Man' },
+            { name: 'Blast Man' },
+            { name: 'Acid Man' },
+            { name: 'Tundra Man' },
+            { name: 'Torch Man' },
+            { name: 'Impact Man' },
+            { name: 'Bounce Man' }
+        ]
+    }
+};
+
+let currentGameId = 2;
+let bosses = games[currentGameId].bosses;
 
 // Current order of boss names; lockedNames holds names locked in place
 let order = bosses.map(b => b.name);
@@ -15,7 +154,13 @@ const lockedNames = new Set();
 
 const grid = document.getElementById('boss-grid');
 const shuffleBtn = document.getElementById('shuffle-btn');
-const bossByName = Object.fromEntries(bosses.map(b => [b.name, b]));
+const gameTitle = document.getElementById('game-title');
+const menuBtn = document.getElementById('menu-btn');
+const menuIcon = document.getElementById('menu-icon');
+const menuOverlay = document.getElementById('menu-overlay');
+const gameMenu = document.getElementById('game-menu');
+const gameList = document.getElementById('game-list');
+let bossByName = Object.fromEntries(bosses.map(b => [b.name, b]));
 
 // Fisher-Yates shuffle — returns a new shuffled array
 function shuffle(array) {
@@ -35,6 +180,69 @@ function shuffleUnlocked() {
     order = order.map(name => lockedNames.has(name) ? name : shuffled[next++]);
 }
 
+// Two-word Robot Master initials (e.g. "Cut Man" -> "CM") for missing art
+function initialsFor(name) {
+    return name.split(' ').map(word => word[0]).join('');
+}
+
+// Naming convention for portrait assets, e.g. "assets/MM1_-_Cut_Man_Portrait.png"
+function imagePathFor(gameId, name) {
+    return `assets/MM${gameId}_-_${name.replace(/ /g, '_')}_Portrait.png`;
+}
+
+function openMenu() {
+    gameMenu.classList.add('open');
+    menuOverlay.classList.add('open');
+    menuBtn.setAttribute('aria-expanded', 'true');
+    gameMenu.setAttribute('aria-hidden', 'false');
+    menuIcon.src = 'assets/menu_open.png';
+}
+
+function closeMenu() {
+    gameMenu.classList.remove('open');
+    menuOverlay.classList.remove('open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+    gameMenu.setAttribute('aria-hidden', 'true');
+    menuIcon.src = 'assets/menu.png';
+}
+
+function selectGame(gameId) {
+    currentGameId = gameId;
+    bosses = games[currentGameId].bosses;
+    bossByName = Object.fromEntries(bosses.map(b => [b.name, b]));
+    order = bosses.map(b => b.name);
+    lockedNames.clear();
+    gameTitle.textContent = games[currentGameId].title;
+    renderMenu();
+    closeMenu();
+    render();
+}
+
+function renderMenu() {
+    gameList.innerHTML = '';
+    Object.keys(games).forEach(id => {
+        const gameId = Number(id);
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'game-option' + (gameId === currentGameId ? ' active' : '');
+        btn.textContent = games[gameId].title;
+        btn.addEventListener('click', () => selectGame(gameId));
+        li.appendChild(btn);
+        gameList.appendChild(li);
+    });
+}
+
+menuBtn.addEventListener('click', () => {
+    if (gameMenu.classList.contains('open')) {
+        closeMenu();
+    } else {
+        openMenu();
+    }
+});
+
+menuOverlay.addEventListener('click', closeMenu);
+
 function render() {
     grid.innerHTML = '';
 
@@ -48,17 +256,26 @@ function render() {
         card.dataset.index = index;
         card.dataset.name = name;
 
-        const img = document.createElement('img');
-        img.src = boss.image;
-        img.alt = boss.name;
-        img.draggable = false;
-        if (boss.name === 'Quick Man') {
-            img.className = 'quick-man-portrait';
-        }
-
         const portraitFrame = document.createElement('div');
         portraitFrame.className = 'portrait-frame';
+
+        const img = document.createElement('img');
+        img.src = imagePathFor(currentGameId, boss.name);
+        img.alt = boss.name;
+        img.draggable = false;
+        if (currentGameId === 2 && boss.name === 'Quick Man') {
+            img.className = 'quick-man-portrait';
+        }
+        img.addEventListener('error', () => {
+            img.remove();
+            portraitFrame.classList.add('no-image');
+            const initials = document.createElement('span');
+            initials.className = 'portrait-initials';
+            initials.textContent = initialsFor(boss.name);
+            portraitFrame.appendChild(initials);
+        }, { once: true });
         portraitFrame.appendChild(img);
+
 
         const orderBadge = document.createElement('span');
         orderBadge.className = 'order';
@@ -129,4 +346,5 @@ shuffleBtn.addEventListener('click', () => {
 });
 
 // Initial render in the classic order
+renderMenu();
 render();

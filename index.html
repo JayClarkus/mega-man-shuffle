@@ -7,8 +7,17 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <button id="menu-btn" type="button" aria-label="Select game" aria-expanded="false" aria-controls="game-menu">
+        <img id="menu-icon" src="assets/menu.png" alt="">
+    </button>
+    <div id="menu-overlay" class="menu-overlay"></div>
+    <nav id="game-menu" class="game-menu" aria-hidden="true">
+        <p class="game-menu-title">Select Game</p>
+        <ul id="game-list" class="game-list"></ul>
+    </nav>
+
     <main class="container">
-        <h1>Mega Man 2</h1>
+        <h1 id="game-title">Mega Man 2</h1>
         <br>
         <p class="subtitle">Stage Order</p>
         <br>
