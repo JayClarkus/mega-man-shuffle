@@ -216,6 +216,104 @@ function coverPathFor(gameId) {
     return assetUrl(`assets/MM${gameId}_-_Cover_Art.jpg`);
 }
 
+// Pointer-based drag & drop for boss cards: works for mouse, touch, and pen
+// in one code path (native HTML5 drag-and-drop doesn't fire on touch at all).
+// Touch/pen wait for a brief hold before a drag starts so a normal swipe
+// still scrolls the page; mouse drags start immediately.
+const DRAG_HOLD_MS = 200;
+const DRAG_CANCEL_PX = 10;
+
+function attachDragHandlers(card, index, name) {
+    let pointerId = null;
+    let holdTimer = null;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+
+    function clearDropTargets() {
+        document.querySelectorAll('.boss-card.drop-target').forEach(el => el.classList.remove('drop-target'));
+    }
+
+    function beginDrag() {
+        dragging = true;
+        holdTimer = null;
+        card.classList.add('dragging');
+        // Take the card out of the transition/flow visually so it can follow the pointer 1:1
+        card.style.transition = 'none';
+        card.style.zIndex = '50';
+        card.style.pointerEvents = 'none';
+    }
+
+    function cleanup() {
+        clearTimeout(holdTimer);
+        holdTimer = null;
+        dragging = false;
+        pointerId = null;
+        card.classList.remove('dragging');
+        card.style.transform = '';
+        card.style.transition = '';
+        card.style.zIndex = '';
+        card.style.pointerEvents = '';
+        clearDropTargets();
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+    }
+
+    function onMove(e) {
+        if (e.pointerId !== pointerId) return;
+        if (!dragging) {
+            // Movement before the hold timer fires means the user is scrolling, not dragging
+            if (Math.abs(e.clientX - startX) > DRAG_CANCEL_PX || Math.abs(e.clientY - startY) > DRAG_CANCEL_PX) {
+                cleanup();
+            }
+            return;
+        }
+        e.preventDefault();
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        card.style.transform = `translate(${dx}px, ${dy}px) scale(1.05)`;
+        clearDropTargets();
+        const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.boss-card');
+        if (target && target !== card && !target.classList.contains('locked')) {
+            target.classList.add('drop-target');
+        }
+    }
+
+    function onUp(e) {
+        if (e.pointerId !== pointerId) return;
+        const wasDragging = dragging;
+        const target = wasDragging ? document.elementFromPoint(e.clientX, e.clientY)?.closest('.boss-card') : null;
+        cleanup();
+        if (!wasDragging || !target || target === card) return;
+
+        const toIndex = Number(target.dataset.index);
+        if (Number.isNaN(toIndex) || lockedNames.has(order[toIndex]) || lockedNames.has(name)) return;
+
+        [order[index], order[toIndex]] = [order[toIndex], order[index]];
+        render();
+    }
+
+    card.addEventListener('pointerdown', (e) => {
+        if (lockedNames.has(name)) return;
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+        pointerId = e.pointerId;
+        startX = e.clientX;
+        startY = e.clientY;
+
+        window.addEventListener('pointermove', onMove, { passive: false });
+        window.addEventListener('pointerup', onUp);
+        window.addEventListener('pointercancel', onUp);
+
+        if (e.pointerType === 'mouse') {
+            beginDrag();
+        } else {
+            holdTimer = setTimeout(beginDrag, DRAG_HOLD_MS);
+        }
+    });
+}
+
 // Gray out sibling options so the hovered/focused title stands out
 function showBackgroundPreview(container, el) {
     container.classList.add('dimming');
@@ -331,7 +429,6 @@ function render() {
 
         const card = document.createElement('div');
         card.className = 'boss-card' + (isLocked ? ' locked' : '');
-        card.draggable = !isLocked;
         card.dataset.index = index;
         card.dataset.name = name;
 
@@ -379,37 +476,8 @@ function render() {
             render();
         });
 
-        // Drag & drop: drop onto another card to swap the two positions
-        card.addEventListener('dragstart', (e) => {
-            if (lockedNames.has(name)) {
-                e.preventDefault();
-                return;
-            }
-            e.dataTransfer.setData('text/plain', index.toString());
-            e.dataTransfer.effectAllowed = 'move';
-        });
-
-        card.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            card.classList.add('drop-target');
-        });
-
-        card.addEventListener('dragleave', () => {
-            card.classList.remove('drop-target');
-        });
-
-        card.addEventListener('drop', (e) => {
-            e.preventDefault();
-            card.classList.remove('drop-target');
-            const fromIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
-            const toIndex = index;
-            if (Number.isNaN(fromIndex) || fromIndex === toIndex) return;
-            if (lockedNames.has(order[toIndex])) return;
-
-            [order[fromIndex], order[toIndex]] = [order[toIndex], order[fromIndex]];
-            render();
-        });
+        // Drag & drop: drag onto another card to swap the two positions
+        attachDragHandlers(card, index, name);
 
         card.appendChild(portraitFrame);
         card.appendChild(orderBadge);
