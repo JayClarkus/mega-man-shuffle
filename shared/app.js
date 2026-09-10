@@ -410,6 +410,8 @@ function attachDragHandlers(card, index, name) {
 
     card.addEventListener('pointerdown', (e) => {
         if (lockedNames.has(name)) return;
+        // Let the lock button handle its own tap/click instead of starting a drag
+        if (e.target.closest('.lock-btn')) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
 
         stopMomentumScroll();
