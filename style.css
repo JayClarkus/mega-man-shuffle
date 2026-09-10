@@ -27,6 +27,7 @@ body {
     font-family: 'Mega Man 2', 'Courier New', Courier, monospace;
     color: #ffffff;
     padding: 24px 16px;
+    overflow-x: hidden;
 }
 
 .container {
@@ -45,6 +46,8 @@ h1 {
     letter-spacing: 2px;
     text-transform: uppercase;
     text-shadow: 3px 3px 0 #00236b;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .home-view {
@@ -63,6 +66,8 @@ h1 {
     letter-spacing: 2px;
     text-transform: uppercase;
     text-shadow: 3px 3px 0 #00236b;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .flavor-text {
@@ -281,8 +286,9 @@ h1 {
 #shuffle-btn {
     margin-top: 32px;
     padding: 12px 36px;
+    max-width: 100%;
     font-family: inherit;
-    font-size: 2.2rem;
+    font-size: clamp(1.4rem, 7vw, 2.2rem);
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 2px;
@@ -293,6 +299,7 @@ h1 {
     cursor: pointer;
     box-shadow: 4px 4px 0 #00236b;
     transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.1s ease;
+    overflow-wrap: break-word;
 }
 
 #shuffle-btn:hover {
@@ -499,6 +506,17 @@ h1 {
        container to the top, so reserve space below the fixed menu button */
     body {
         padding-top: max(72px, calc(env(safe-area-inset-top) + 60px));
+    }
+
+    /* shrink faster than the shared clamp() so long words fit without breaking */
+    h1,
+    .home-title {
+        font-size: clamp(2.2rem, 11vw, 4rem);
+    }
+
+    .container,
+    .home-view {
+        padding: 20px 16px;
     }
 }
 
