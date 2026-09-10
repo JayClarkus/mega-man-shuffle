@@ -373,6 +373,8 @@ h1 {
     transition: transform 0.25s ease;
     z-index: 25;
     overflow-y: auto;
+    display: flex;
+    flex-direction: column;
 }
 
 .game-menu.open {
@@ -396,6 +398,40 @@ h1 {
     display: flex;
     flex-direction: column;
     gap: 8px;
+}
+
+.menu-donate {
+    margin-top: auto;
+    padding-top: 40px;
+    display: flex;
+    justify-content: center;
+}
+
+.menu-donate form {
+    width: 100%;
+}
+
+/* extra class beats the per-page inline <style> block's single-class rule */
+.menu-donate .pp-8ZA954SJUMY6G {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: 44px;
+    padding: 10px 14px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.95rem;
+    color: #F0B838;
+    background-color: rgba(255, 255, 255, 0.08);
+    border: 2px solid #b8c4d8;
+    border-radius: 6px;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.menu-donate .pp-8ZA954SJUMY6G:hover {
+    border-color: #F0B838;
+    transform: translateX(4px);
 }
 
 .game-option {
