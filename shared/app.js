@@ -222,6 +222,51 @@ function coverPathFor(gameId) {
 // still scrolls the page; mouse drags start immediately.
 const DRAG_HOLD_MS = 200;
 const DRAG_CANCEL_PX = 10;
+const EDGE_SCROLL_ZONE = 72; // px from the top/bottom viewport edge that triggers auto-scroll while dragging
+const EDGE_SCROLL_MAX_SPEED = 16; // px per animation frame once the pointer is right at the edge
+const SCROLL_FRICTION = 0.94; // per-frame velocity decay for the post-release momentum scroll
+const MIN_MOMENTUM_VELOCITY = 0.02; // px/ms below which momentum scrolling stops
+
+// Scroll animation state is shared across all cards — only one drag/swipe
+// gesture is ever active at a time, so one set of rAF loops is enough, and
+// starting a new gesture on any card should cancel a previous momentum scroll.
+let pendingPageScrollDy = 0;
+let pageScrollRafId = null;
+let momentumRafId = null;
+
+function queuePageScroll(dy) {
+    pendingPageScrollDy += dy;
+    if (pageScrollRafId === null) {
+        pageScrollRafId = requestAnimationFrame(() => {
+            pageScrollRafId = null;
+            if (pendingPageScrollDy !== 0) {
+                window.scrollBy(0, pendingPageScrollDy);
+                pendingPageScrollDy = 0;
+            }
+        });
+    }
+}
+
+function stopMomentumScroll() {
+    if (momentumRafId !== null) {
+        cancelAnimationFrame(momentumRafId);
+        momentumRafId = null;
+    }
+}
+
+// Emulates native inertial scrolling after a manual (touch-action: none) swipe release
+function startMomentumScroll(initialVelocity) {
+    stopMomentumScroll();
+    let velocity = initialVelocity;
+    function step() {
+        momentumRafId = null;
+        if (Math.abs(velocity) < MIN_MOMENTUM_VELOCITY) return;
+        window.scrollBy(0, velocity * 16.7);
+        velocity *= SCROLL_FRICTION;
+        momentumRafId = requestAnimationFrame(step);
+    }
+    momentumRafId = requestAnimationFrame(step);
+}
 
 function attachDragHandlers(card, index, name) {
     let pointerId = null;
@@ -231,14 +276,64 @@ function attachDragHandlers(card, index, name) {
     let startX = 0;
     let startY = 0;
     let lastY = 0;
+    let lastMoveTime = 0;
+    let velocityY = 0; // smoothed px/ms, used to seed momentum scroll on release
+    let dragScrollAccum = 0; // page scroll accumulated during edge auto-scroll while dragging
+    let edgeScrollSpeed = 0;
+    let edgeScrollRafId = null;
 
     function clearDropTargets() {
         document.querySelectorAll('.boss-card.drop-target').forEach(el => el.classList.remove('drop-target'));
     }
 
+    function updateDragVisual(clientX, clientY) {
+        const dx = clientX - startX;
+        const dy = clientY - startY + dragScrollAccum;
+        card.style.transform = `translate(${dx}px, ${dy}px) scale(1.05)`;
+        clearDropTargets();
+        const target = document.elementFromPoint(clientX, clientY)?.closest('.boss-card');
+        if (target && target !== card && !target.classList.contains('locked')) {
+            target.classList.add('drop-target');
+        }
+    }
+
+    function stopEdgeAutoScroll() {
+        edgeScrollSpeed = 0;
+        if (edgeScrollRafId !== null) {
+            cancelAnimationFrame(edgeScrollRafId);
+            edgeScrollRafId = null;
+        }
+    }
+
+    // Keeps scrolling the page while a drag is held near the top/bottom edge,
+    // so the grid can reveal drop targets currently off-screen
+    function edgeAutoScrollStep(clientX, clientY) {
+        edgeScrollRafId = null;
+        if (!dragging || edgeScrollSpeed === 0) return;
+        window.scrollBy(0, edgeScrollSpeed);
+        dragScrollAccum += edgeScrollSpeed;
+        updateDragVisual(clientX, clientY);
+        edgeScrollRafId = requestAnimationFrame(() => edgeAutoScrollStep(clientX, clientY));
+    }
+
+    function updateEdgeAutoScroll(clientX, clientY) {
+        const viewportHeight = window.innerHeight;
+        let speed = 0;
+        if (clientY < EDGE_SCROLL_ZONE) {
+            speed = -Math.ceil(((EDGE_SCROLL_ZONE - clientY) / EDGE_SCROLL_ZONE) * EDGE_SCROLL_MAX_SPEED);
+        } else if (clientY > viewportHeight - EDGE_SCROLL_ZONE) {
+            speed = Math.ceil(((clientY - (viewportHeight - EDGE_SCROLL_ZONE)) / EDGE_SCROLL_ZONE) * EDGE_SCROLL_MAX_SPEED);
+        }
+        edgeScrollSpeed = speed;
+        if (speed !== 0 && edgeScrollRafId === null) {
+            edgeScrollRafId = requestAnimationFrame(() => edgeAutoScrollStep(clientX, clientY));
+        }
+    }
+
     function beginDrag() {
         dragging = true;
         holdTimer = null;
+        dragScrollAccum = 0;
         card.classList.add('dragging');
         // Take the card out of the transition/flow visually so it can follow the pointer 1:1
         card.style.transition = 'none';
@@ -252,6 +347,7 @@ function attachDragHandlers(card, index, name) {
         dragging = false;
         scrolling = false;
         pointerId = null;
+        stopEdgeAutoScroll();
         card.classList.remove('dragging');
         card.style.transform = '';
         card.style.transition = '';
@@ -267,22 +363,19 @@ function attachDragHandlers(card, index, name) {
         if (e.pointerId !== pointerId) return;
         if (dragging) {
             e.preventDefault();
-            const dx = e.clientX - startX;
-            const dy = e.clientY - startY;
-            card.style.transform = `translate(${dx}px, ${dy}px) scale(1.05)`;
-            clearDropTargets();
-            const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.boss-card');
-            if (target && target !== card && !target.classList.contains('locked')) {
-                target.classList.add('drop-target');
-            }
+            updateEdgeAutoScroll(e.clientX, e.clientY);
+            updateDragVisual(e.clientX, e.clientY);
             return;
         }
         // The card disables touch-action so the browser never takes over scrolling
         // here — until the hold fires (a drag) we have to scroll the page ourselves,
         // otherwise a swipe attempt would just get stuck doing nothing.
         e.preventDefault();
+        const now = performance.now();
+        const dt = Math.max(1, now - lastMoveTime);
         const dy = e.clientY - lastY;
         lastY = e.clientY;
+        lastMoveTime = now;
         if (!scrolling && (Math.abs(e.clientX - startX) > DRAG_CANCEL_PX || Math.abs(e.clientY - startY) > DRAG_CANCEL_PX)) {
             // Movement before the hold timer fires means the user is scrolling, not dragging
             clearTimeout(holdTimer);
@@ -290,15 +383,22 @@ function attachDragHandlers(card, index, name) {
             scrolling = true;
         }
         if (scrolling) {
-            window.scrollBy(0, -dy);
+            // exponentially-weighted velocity so release can hand off to a native-feeling momentum scroll
+            velocityY = velocityY * 0.7 + (-dy / dt) * 0.3;
+            queuePageScroll(-dy);
         }
     }
 
     function onUp(e) {
         if (e.pointerId !== pointerId) return;
         const wasDragging = dragging;
+        const wasScrolling = scrolling;
+        const releaseVelocity = velocityY;
         const target = wasDragging ? document.elementFromPoint(e.clientX, e.clientY)?.closest('.boss-card') : null;
         cleanup();
+        if (wasScrolling && !wasDragging && Math.abs(releaseVelocity) > MIN_MOMENTUM_VELOCITY) {
+            startMomentumScroll(releaseVelocity);
+        }
         if (!wasDragging || !target || target === card) return;
 
         const toIndex = Number(target.dataset.index);
@@ -312,10 +412,13 @@ function attachDragHandlers(card, index, name) {
         if (lockedNames.has(name)) return;
         if (e.pointerType === 'mouse' && e.button !== 0) return;
 
+        stopMomentumScroll();
         pointerId = e.pointerId;
         startX = e.clientX;
         startY = e.clientY;
         lastY = e.clientY;
+        lastMoveTime = performance.now();
+        velocityY = 0;
 
         window.addEventListener('pointermove', onMove, { passive: false });
         window.addEventListener('pointerup', onUp);

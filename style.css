@@ -389,7 +389,11 @@ h1 {
     position: fixed;
     top: 0;
     left: 0;
+    /* dvh tracks the real visible viewport (mobile browser chrome shrinks/grows
+       100vh), otherwise the bottom of the panel — the donate button — can end
+       up sized off-screen with nothing left to actually scroll */
     height: 100vh;
+    height: 100dvh;
     width: min(260px, 78vw);
     background: #022a70;
     border-right: 3px solid #ffffff;
@@ -399,6 +403,8 @@ h1 {
     transition: transform 0.25s ease;
     z-index: 25;
     overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
     display: flex;
     flex-direction: column;
 }
@@ -408,10 +414,12 @@ h1 {
 }
 
 #home-btn {
+    flex-shrink: 0;
     margin-bottom: 20px;
 }
 
 .game-menu-title {
+    flex-shrink: 0;
     text-transform: uppercase;
     letter-spacing: 2px;
     color: #dce4ed;
@@ -420,6 +428,7 @@ h1 {
 }
 
 .game-list {
+    flex-shrink: 0;
     list-style: none;
     display: flex;
     flex-direction: column;
@@ -427,6 +436,7 @@ h1 {
 }
 
 .menu-donate {
+    flex-shrink: 0;
     margin-top: auto;
     padding-top: 40px;
     display: flex;
