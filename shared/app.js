@@ -227,8 +227,10 @@ function attachDragHandlers(card, index, name) {
     let pointerId = null;
     let holdTimer = null;
     let dragging = false;
+    let scrolling = false;
     let startX = 0;
     let startY = 0;
+    let lastY = 0;
 
     function clearDropTargets() {
         document.querySelectorAll('.boss-card.drop-target').forEach(el => el.classList.remove('drop-target'));
@@ -248,6 +250,7 @@ function attachDragHandlers(card, index, name) {
         clearTimeout(holdTimer);
         holdTimer = null;
         dragging = false;
+        scrolling = false;
         pointerId = null;
         card.classList.remove('dragging');
         card.style.transform = '';
@@ -262,21 +265,32 @@ function attachDragHandlers(card, index, name) {
 
     function onMove(e) {
         if (e.pointerId !== pointerId) return;
-        if (!dragging) {
-            // Movement before the hold timer fires means the user is scrolling, not dragging
-            if (Math.abs(e.clientX - startX) > DRAG_CANCEL_PX || Math.abs(e.clientY - startY) > DRAG_CANCEL_PX) {
-                cleanup();
+        if (dragging) {
+            e.preventDefault();
+            const dx = e.clientX - startX;
+            const dy = e.clientY - startY;
+            card.style.transform = `translate(${dx}px, ${dy}px) scale(1.05)`;
+            clearDropTargets();
+            const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.boss-card');
+            if (target && target !== card && !target.classList.contains('locked')) {
+                target.classList.add('drop-target');
             }
             return;
         }
+        // The card disables touch-action so the browser never takes over scrolling
+        // here — until the hold fires (a drag) we have to scroll the page ourselves,
+        // otherwise a swipe attempt would just get stuck doing nothing.
         e.preventDefault();
-        const dx = e.clientX - startX;
-        const dy = e.clientY - startY;
-        card.style.transform = `translate(${dx}px, ${dy}px) scale(1.05)`;
-        clearDropTargets();
-        const target = document.elementFromPoint(e.clientX, e.clientY)?.closest('.boss-card');
-        if (target && target !== card && !target.classList.contains('locked')) {
-            target.classList.add('drop-target');
+        const dy = e.clientY - lastY;
+        lastY = e.clientY;
+        if (!scrolling && (Math.abs(e.clientX - startX) > DRAG_CANCEL_PX || Math.abs(e.clientY - startY) > DRAG_CANCEL_PX)) {
+            // Movement before the hold timer fires means the user is scrolling, not dragging
+            clearTimeout(holdTimer);
+            holdTimer = null;
+            scrolling = true;
+        }
+        if (scrolling) {
+            window.scrollBy(0, -dy);
         }
     }
 
@@ -301,6 +315,7 @@ function attachDragHandlers(card, index, name) {
         pointerId = e.pointerId;
         startX = e.clientX;
         startY = e.clientY;
+        lastY = e.clientY;
 
         window.addEventListener('pointermove', onMove, { passive: false });
         window.addEventListener('pointerup', onUp);
@@ -372,6 +387,9 @@ function openMenu() {
     menuBtn.setAttribute('aria-expanded', 'true');
     gameMenu.setAttribute('aria-hidden', 'false');
     menuIcon.src = assetUrl('assets/menu_open.png');
+    // Lock the background layer's scroll so only the menu panel scrolls while open
+    document.documentElement.classList.add('menu-open');
+    document.body.classList.add('menu-open');
 }
 
 function closeMenu() {
@@ -380,6 +398,8 @@ function closeMenu() {
     menuBtn.setAttribute('aria-expanded', 'false');
     gameMenu.setAttribute('aria-hidden', 'true');
     menuIcon.src = assetUrl('assets/menu.png');
+    document.documentElement.classList.remove('menu-open');
+    document.body.classList.remove('menu-open');
 }
 
 // Menu options navigate to each game's own page rather than swapping in-page state
